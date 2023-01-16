@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Scrip para modificar las imágenes mediante la aplicación imageMagick
 
+# Porcentaje de imcremento 
 INCREMENTO=10
+# Color de fondo
 COLOR=288368
 
 echo "  "\n
@@ -12,26 +14,35 @@ echo con el color de fondo $COLOR
 echo "-------------------------------------------------"
 echo " "
 
-# Vemos los parámetros de la imagen que le hemos pasado.
 identify $1
 
-# ancho x Alto
-# después nos pedirá el mayor de los dos (deberá hacerlo automaticamente cuando sepa como)
-# Le daremos como parámetro el lado mayor y cuadrará la imagen. Añadiendo lo que falta
-# con el color de fondo '288368'
+# Vemos los parámetros de la imagen que le hemos pasado.
+ancho=$(identify -format %w $1)
+alto=$(identify -format %h $1)
 
-read -p " Dame el valor mayor de la imagen " maxValor
+# Buscamos el valor más alto.
+if [[ $ancho -gt $alto ]]
+then 
+	maxValor=$ancho
+else
+	maxValor=$alto
+fi
 
-echo "El 110% de $maxValor =" 
+echo "Ancho $ancho"
+echo "Alto $alto"
+
+echo "Cuadramos la imagen a $maxValor"
+
+echo "Un incremento de $INCREMENTO % de $maxValor es " 
 valorFinal=$(expr $maxValor \* $INCREMENTO / 100 + $maxValor)
 echo $valorFinal
 
 #cuadramos la imagen y le incrementamos un porcentaje INCREMENTO
-convert $1 -gravity center -background '#288368' -extent "$valorFinal"x"$valorFinal" finaltotal.png
+convert $1 -gravity center -background '#288368' -extent "$valorFinal"x"$valorFinal" imagenFinal.png
 
-#Movemos el archivo original
+# Movemos el archivo original
 mv $1 ./originales
 
-#mostramos el archivo
+# mostramos el archivo
 # Cerramos la ventana con "q"
-display finaltotal.png
+display imagenFinal.png
