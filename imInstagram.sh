@@ -5,6 +5,14 @@
 INCREMENTO=10
 # Color de fondo
 COLOR=288368
+#imagen donde se guardará el resultado
+FINAL="imagenFinal.png"
+#imagen para guardar paso intermedio.
+INTERMEDIO="imagenConBorde.png"
+
+
+
+display $1
 
 echo "  "\n
 echo "-------------------------------------------------"
@@ -14,11 +22,16 @@ echo con el color de fondo $COLOR
 echo "-------------------------------------------------"
 echo " "
 
-identify $1
+convert $1 -bordercolor white -border 1 \
+	-bordercolor grey60 -border 1 \
+	\( +clone -background black -shadow 60x4+4+4 \) +swap \
+	-background '#288368' -mosaic $INTERMEDIO 
+
+display $INTERMEDIO
 
 # Vemos los parámetros de la imagen que le hemos pasado.
-ancho=$(identify -format %w $1)
-alto=$(identify -format %h $1)
+ancho=$(identify -format %w $INTERMEDIO )
+alto=$(identify -format %h $INTERMEDIO)
 
 # Buscamos el valor más alto.
 if [[ $ancho -gt $alto ]]
@@ -38,11 +51,13 @@ valorFinal=$(expr $maxValor \* $INCREMENTO / 100 + $maxValor)
 echo $valorFinal
 
 #cuadramos la imagen y le incrementamos un porcentaje INCREMENTO
-convert $1 -gravity center -background '#288368' -extent "$valorFinal"x"$valorFinal" imagenFinal.png
+convert $INTERMEDIO -gravity center -background '#288368' -extent "$valorFinal"x"$valorFinal" $FINAL
 
 # Movemos el archivo original
-mv $1 ./originales
+# mv $1 ./originales
 
+
+# convert prueba.png \( +clone  -background "288368" -shadow 80x3+5+5 \) +swap \              -background none   -layers merge  +repage   prueba2.png
 # mostramos el archivo
 # Cerramos la ventana con "q"
-display imagenFinal.png
+display $FINAL
