@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# Scrip para modificar las imágenes mediante la aplicación imageMagick
+# ---------------------------------------------------------------------
+# Autor: SocratesCV
 
+# Scrip para modificar las imágenes mediante la aplicación imageMagick
+# Es mi primer script y tendrá muchos fallos, errores y cosas a mejorar
+# intentaré mejorarlo y actualizarlo. Me a servido par aprender y dar 
+# un primer paso.
+#------------------------------------------------------------------------
+
+# CONSTANTES
 # Porcentaje de imcremento 
 INCREMENTO=10
 # Color de fondo
@@ -44,7 +52,7 @@ echo $valorFinal
 convert $INTERMEDIO -gravity center -background '#288368' -extent "$valorFinal"x"$valorFinal" $FINAL
 
 # Movemos el archivo original
-mv $1 ./originales
+mv $1 ./originales/
 
 # mostramos el archivo
 # Cerramos la ventana con "q"
