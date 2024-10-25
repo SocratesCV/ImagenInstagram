@@ -27,6 +27,11 @@ COLOR=288368
 FINAL="imagenFinal.png"
 # Imagen para guardar paso intermedio.
 INTERMEDIO="imagenConBorde.png"
+# Esta variable controla si se tiene que poner el logo de Instagram y el nombre del autor. 	
+# 0: No se pone
+# 1: Se pone
+LOGO="iconoVerde.png"
+CONLOGO=0
 
 # Verifica si no se han proporcionado argumentos
 if [ $# -eq 0 ]; then
@@ -45,7 +50,8 @@ echo "-------------------------------------------------"
 echo " "
 sleep 3
 
-# Guarda el primer argumento como número de imagen
+# Guarda el primer argumento como nombre de la imagen
+
 imagenInicial=$1
 # Verifica si el archivo de imagen inicial existe
 if [ ! -f "$imagenInicial" ]; then
@@ -59,6 +65,7 @@ if [ -z "$INCREMENTO" ]; then
 	exit 1
 fi
 
+# Verifica si la variable COLOR está definida
 if [ -z "$COLOR" ]; then
 	echo "Error: La variable COLOR no está definida"
 	exit 1
@@ -111,6 +118,81 @@ fi
 #   fi
 #######################################
 
+# Si añadimos en los argumentos el nombre del autor, añadimos el logo de Instagram y el nombre del autor.
+# Comprobamos si existe el archivo del logo
+# Añadimos el logo y el texto a la imagen
+# Mostramos la imagen resultante
+# 
+# Verifica si se proporcionó el nombre del autor como segundo argumento
+if [ $# -ge 2 ]; then
+	# Verifica si el archivo del logo existe
+	# Si existe, se pondrá el logo y el nombre del autor.
+	# ponemos el valor 1 a la variable CONLOGO	ya qeu se pondrá el logo y el nombre del autor.	
+	# Mejoras posibles:
+	# 1. Permitir personalizar la posición del logo y el texto
+	# 2. Ofrecer opciones para ajustar el tamaño del logo y el texto
+	# 3. Implementar un sistema para elegir el color del texto basado en el fondo
+	# 4. Añadir manejo de errores para el comando 'display'
+	# 5. Considerar el uso de variables para los parámetros como la fuente y el tamaño del texto
+	CONLOGO=1	
+	if [ ! -f "$LOGO" ]; then
+		echo "Error: El archivo de imagen $LOGO no existe"
+		exit 1
+	fi
+	
+	# Guarda el nombre del autor en la variable texto
+   	texto=$2
+
+	# Obtener dimensiones de la imagen de fondo
+	ancho_fondo=$(identify -format "%w" "$imagenInicial")
+	alto_fondo=$(identify -format "%h" "$imagenInicial")
+
+	# Calcular tamaño del icono (10% del tamaño de la imagen de fondo)
+	ancho_icono=$((ancho_fondo / 10))
+	alto_icono=$((alto_fondo / 10))
+
+	# Calcular el margen (5% del tamaño de la imagen de fondo)
+	margen_x=$((ancho_fondo * 5 / 100))
+	margen_y=$((alto_fondo * 5 / 100))
+
+	# Obtener dimensiones de la imagen de fondo
+	ancho_fondo=$(identify -format "%w" "$imagenInicial")
+	alto_fondo=$(identify -format "%h" "$imagenInicial")
+
+	# Calcular tamaño del icono (10% del tamaño de la imagen de fondo)
+	ancho_icono=$((ancho_fondo / 10))
+	alto_icono=$((alto_fondo / 10))
+
+	# Calcular el margen (5% del tamaño de la imagen de fondo)
+	margen_x=$((ancho_fondo * 5 / 100))
+	margen_y=$((alto_fondo * 5 / 100))
+
+	# Redimensionar el icono
+	# Si el comando 'magick' está disponible, usa 'magick' para redimensionar el logo
+	if command -v magick &>/dev/null; then
+		# Redimensionar el icono
+		icono_redimensionado="icono_redimensionado.png"
+		magick "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
+		# Superponer el icono en la esquina superior izquierda de la imagen inicial.
+		magick "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
+	else
+		# Si 'magick' no está disponible, usa 'convert'
+		echo "Advertencia: El comando 'magick' de ImageMagick no está disponible, usando 'convert' para redimensionar el logo"
+		convert "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
+		# Superponer el icono en la esquina superior izquierda con margen
+		convert "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
+	fi
+	
+	echo "Imagen creada con el icono en la esquina superior izquierda: $imagenInicial"
+
+	
+	# Muestra la imagen resultante
+	display "$imagenInicial"
+
+	
+fi
+
+
 # Este código utiliza el comando 'convert' de ImageMagick para procesar una imagen:
 # 1. Añade un borde blanco de 1 píxel
 # 2. Añade un borde gris de 1 píxel
@@ -153,10 +235,14 @@ convert $INTERMEDIO -gravity center -background '#288368' -extent "${valorFinal}
 # Añadir el código que añade el logotipo de instagram y el nombre del autor.
 # Mostrar el resultao y si no convence preguntar que se quiere modificar, vertical, horizontal o color.
 # Esto anterior sería hacerlo con un while o utilizando funciones.
+#
+# 
+#convert iconoPintadoNegro.png -fuzz 10% -fill "#288368" -opaque black  iconoFinal.png
+
 # ######################################################
 
 # Movemos el archivo original
-mv dirimagen/$nombreArchivo ./originales/
+# mv dirimagen/$nombreArchivo ./originales/
 
 # mostramos el archivo
 # Cerramos la ventana con "q"
