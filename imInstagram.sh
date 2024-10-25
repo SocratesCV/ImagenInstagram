@@ -169,18 +169,21 @@ if [ $# -ge 2 ]; then
 
 	# Redimensionar el icono
 	# Si el comando 'magick' está disponible, usa 'magick' para redimensionar el logo
+	icono_redimensionado="icono_redimensionado.png"
 	if command -v magick &>/dev/null; then
-		# Redimensionar el icono
-		icono_redimensionado="icono_redimensionado.png"
 		magick "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
 		# Superponer el icono en la esquina superior izquierda de la imagen inicial.
 		magick "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
+		# Añadir el texto al lado derecho del logo
+		magick "$imagenInicial" -font Arial -pointsize $((alto_icono/2)) -fill white -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$imagenInicial"
 	else
 		# Si 'magick' no está disponible, usa 'convert'
 		echo "Advertencia: El comando 'magick' de ImageMagick no está disponible, usando 'convert' para redimensionar el logo"
 		convert "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
 		# Superponer el icono en la esquina superior izquierda con margen
 		convert "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
+		# Añadir el texto al lado derecho del logo
+		convert "$imagenInicial" -font Arial -pointsize $((alto_icono/2)) -fill white -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$imagenInicial"
 	fi
 	
 	echo "Imagen creada con el icono en la esquina superior izquierda: $imagenInicial"
@@ -200,10 +203,11 @@ fi
 # 4. Combina la imagen original con la sombra
 # 5. Establece un fondo de color '#288368' (verde azulado)
 # 6. Guarda el resultado en la imagen intermedia ($INTERMEDIO)
-convert $imagenInicial -bordercolor white -border 1 \
-	-bordercolor grey60 -border 1 \
-	\( +clone -background black -shadow 60x4+4+4 \) +swap \
-	v -background '#288368' -mosaic $INTERMEDIO
+convert "$imagenInicial" -bordercolor white -border 1 -bordercolor grey60 -border 1 \( +clone -background black -shadow 60x4+4+4 \) +swap -background '#288368' -mosaic "$INTERMEDIO"
+# Corregimos el error sintáctico en la línea 206
+# Cambiamos $((maxValor * (100 + INCREMENTO) / 100)) por $((maxValor * (100 + $INCREMENTO) / 100))
+valorFinal=$((maxValor * (100 + $INCREMENTO) / 100))
+echo "Nuevo tamaño de la imagen: $valorFinal x $valorFinal"
 
 # Este código realiza las siguientes acciones:
 
