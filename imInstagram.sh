@@ -16,23 +16,30 @@
 #------------------------------------------------------------------------
 
 # (0) Llamar al script
-# imInstagram.sh 08497463
+# imInstagram.sh 08497463 "Nombre del autor"
+
 
 # CONSTANTES GLOBALES
 # Porcentaje de incremento
 INCREMENTO=10
 # Color de fondo
-COLOR=288368
-# Imagen donde se guardará el resultado
-FINAL="imagenFinal.png"
+COLOR_FONDO="#288368"
+# Imagen con el logo y el nombre del autor
+IMAGEN_CON_LOGO="imagenConLogo.png"
 # Imagen para guardar paso intermedio.
-INTERMEDIO="imagenConBorde.png"
+IMAGEN_CON_BORDE="imagenConBorde.png"
+# Imagen donde se guardará el resultado
+IMAGEN_FINAL="imagenFinal.png"
+LOGO="iconoVerde.png"
+
 # Esta variable controla si se tiene que poner el logo de Instagram y el nombre del autor. 	
 # 0: No se pone
 # 1: Se pone
-LOGO="iconoVerde.png"
-CONLOGO=0
-
+CON_LOGO=0
+# Porcentaje del tamaño de la imagen de fondo para el logo
+PORCENTAJE_LOGO=10
+# Porcentaje del tamaño de la imagen de fondo para el margen
+PORCENTAJE_INCREMENTO_IMAGEN=5
 # Verifica si no se han proporcionado argumentos
 if [ $# -eq 0 ]; then
 	echo "Debes proporcionar un nombre de imagen"
@@ -45,10 +52,9 @@ echo -e "\n"
 echo "-------------------------------------------------"
 echo "Cambiando la imagen $1 para Instagram."
 echo "Le daremos un margen de un $INCREMENTO %"
-echo "con el color de fondo $COLOR"
+echo "con el color de fondo $COLOR_FONDO"
 echo "-------------------------------------------------"
 echo " "
-sleep 3
 
 # Guarda el primer argumento como nombre de la imagen
 
@@ -65,9 +71,9 @@ if [ -z "$INCREMENTO" ]; then
 	exit 1
 fi
 
-# Verifica si la variable COLOR está definida
-if [ -z "$COLOR" ]; then
-	echo "Error: La variable COLOR no está definida"
+# Verifica si la variable COLOR_FONDO está definida
+if [ -z "$COLOR_FONDO" ]; then
+	echo "Error: La variable COLOR_FONDO no está definida"
 	exit 1
 fi
 
@@ -127,14 +133,14 @@ fi
 if [ $# -ge 2 ]; then
 	# Verifica si el archivo del logo existe
 	# Si existe, se pondrá el logo y el nombre del autor.
-	# ponemos el valor 1 a la variable CONLOGO	ya qeu se pondrá el logo y el nombre del autor.	
+	# ponemos el valor 1 a la variable CON_LOGO	ya qeu se pondrá el logo y el nombre del autor.	
 	# Mejoras posibles:
 	# 1. Permitir personalizar la posición del logo y el texto
 	# 2. Ofrecer opciones para ajustar el tamaño del logo y el texto
 	# 3. Implementar un sistema para elegir el color del texto basado en el fondo
 	# 4. Añadir manejo de errores para el comando 'display'
 	# 5. Considerar el uso de variables para los parámetros como la fuente y el tamaño del texto
-	CONLOGO=1	
+		
 	if [ ! -f "$LOGO" ]; then
 		echo "Error: El archivo de imagen $LOGO no existe"
 		exit 1
@@ -142,57 +148,44 @@ if [ $# -ge 2 ]; then
 	
 	# Guarda el nombre del autor en la variable texto
    	texto=$2
-
+	CON_LOGO=1
 	# Obtener dimensiones de la imagen de fondo
 	ancho_fondo=$(identify -format "%w" "$imagenInicial")
 	alto_fondo=$(identify -format "%h" "$imagenInicial")
+	# Calcular tamaño del icono (PORCENTAJE_LOGO% del tamaño de la imagen de fondo)
+	ancho_icono=$((ancho_fondo / $PORCENTAJE_LOGO))
+	alto_icono=$((alto_fondo / $PORCENTAJE_LOGO))
+	# Calcular el margen (% del tamaño de la imagen de fondo)
+	margen_x=$((ancho_fondo * $PORCENTAJE_INCREMENTO_IMAGEN / 100))
+	margen_y=$((alto_fondo * $PORCENTAJE_INCREMENTO_IMAGEN / 100))
 
-	# Calcular tamaño del icono (10% del tamaño de la imagen de fondo)
-	ancho_icono=$((ancho_fondo / 10))
-	alto_icono=$((alto_fondo / 10))
-
-	# Calcular el margen (5% del tamaño de la imagen de fondo)
-	margen_x=$((ancho_fondo * 5 / 100))
-	margen_y=$((alto_fondo * 5 / 100))
-
-	# Obtener dimensiones de la imagen de fondo
-	ancho_fondo=$(identify -format "%w" "$imagenInicial")
-	alto_fondo=$(identify -format "%h" "$imagenInicial")
-
-	# Calcular tamaño del icono (10% del tamaño de la imagen de fondo)
-	ancho_icono=$((ancho_fondo / 10))
-	alto_icono=$((alto_fondo / 10))
-
-	# Calcular el margen (5% del tamaño de la imagen de fondo)
-	margen_x=$((ancho_fondo * 5 / 100))
-	margen_y=$((alto_fondo * 5 / 100))
-
-	# Redimensionar el icono
+	# Redimensionar el logo en proporción al tamaño de la imagen de fondo
 	# Si el comando 'magick' está disponible, usa 'magick' para redimensionar el logo
 	icono_redimensionado="icono_redimensionado.png"
 	if command -v magick &>/dev/null; then
+		echo "Usando magick para redimensionar el logo"
+		sleep 3
 		magick "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
 		# Superponer el icono en la esquina superior izquierda de la imagen inicial.
-		magick "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
-		# Añadir el texto al lado derecho del logo
-		magick "$imagenInicial" -font Arial -pointsize $((alto_icono/2)) -fill white -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$imagenInicial"
+		magick "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$IMAGEN_CON_LOGO"
+		# Añadir el texto al lado derecho del logo con el color almacenado en COLOR_FONDO
+		magick "$IMAGEN_CON_LOGO" -font Pacifico -pointsize $((alto_icono/2)) -fill "$COLOR_FONDO" -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$IMAGEN_CON_LOGO"
 	else
 		# Si 'magick' no está disponible, usa 'convert'
 		echo "Advertencia: El comando 'magick' de ImageMagick no está disponible, usando 'convert' para redimensionar el logo"
+		sleep 3
 		convert "$LOGO" -resize "${ancho_icono}x${alto_icono}" "$icono_redimensionado"
 		# Superponer el icono en la esquina superior izquierda con margen
-		convert "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$imagenInicial"
+		convert "$imagenInicial" "$icono_redimensionado" -gravity northwest -geometry +"$margen_x"+"$margen_y" -composite "$IMAGEN_CON_LOGO"
 		# Añadir el texto al lado derecho del logo
-		convert "$imagenInicial" -font Arial -pointsize $((alto_icono/2)) -fill white -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$imagenInicial"
+		convert "$IMAGEN_CON_LOGO" -font Pacifico -pointsize $((alto_icono/2)) -fill "$COLOR_FONDO" -gravity northwest -annotate +$((margen_x + ancho_icono + 10))+$((margen_y + alto_icono/4)) "$texto" "$IMAGEN_CON_LOGO"
 	fi
-	
-	echo "Imagen creada con el icono en la esquina superior izquierda: $imagenInicial"
-
-	
+	echo "Imagen creada con el icono en la esquina superior izquierda: $IMAGEN_CON_LOGO"
 	# Muestra la imagen resultante
-	display "$imagenInicial"
-
-	
+#	display "$IMAGEN_CON_LOGO"	
+else
+	echo "No se ha añadido el logo y el nombre del autor"
+	IMAGEN_CON_LOGO=$imagenInicial
 fi
 
 
@@ -203,36 +196,46 @@ fi
 # 4. Combina la imagen original con la sombra
 # 5. Establece un fondo de color '#288368' (verde azulado)
 # 6. Guarda el resultado en la imagen intermedia ($INTERMEDIO)
-convert "$imagenInicial" -bordercolor white -border 1 -bordercolor grey60 -border 1 \( +clone -background black -shadow 60x4+4+4 \) +swap -background '#288368' -mosaic "$INTERMEDIO"
-# Corregimos el error sintáctico en la línea 206
-# Cambiamos $((maxValor * (100 + INCREMENTO) / 100)) por $((maxValor * (100 + $INCREMENTO) / 100))
+if command -v magick &>/dev/null; then
+	echo "Usando magick para añadir el borde"
+	magick "$IMAGEN_CON_LOGO" -bordercolor white -border 1 -bordercolor grey60 -border 1 \( +clone -background black -shadow 60x4+4+4 \) +swap -background '#288368' -mosaic "$IMAGEN_CON_BORDE"
+else
+	echo "Advertencia: El comando 'magick' de ImageMagick no está disponible, usando 'convert' para añadir el borde"
+	convert "$IMAGEN_CON_LOGO" -bordercolor white -border 1 -bordercolor grey60 -border 1 \( +clone -background black -shadow 60x4+4+4 \) +swap -background '#288368' -mosaic "$IMAGEN_CON_BORDE"
+fi
 valorFinal=$((maxValor * (100 + $INCREMENTO) / 100))
 echo "Nuevo tamaño de la imagen: $valorFinal x $valorFinal"
 
 # Este código realiza las siguientes acciones:
-
 # 1. Obtiene las dimensiones de la imagen intermedia
-ancho=$(identify -format %w $INTERMEDIO)
-alto=$(identify -format %h $INTERMEDIO)
-
+ancho=$(identify -format %w $IMAGEN_CON_BORDE)
+alto=$(identify -format %h $IMAGEN_CON_BORDE)
 # 2. Determina el lado más largo de la imagen
 if [[ $ancho -gt $alto ]]; then
 	maxValor=$ancho
 else
 	maxValor=$alto
 fi
-
 # 3. Calcula el nuevo tamaño de la imagen, aumentándolo según el porcentaje especificado en $INCREMENTO
 valorFinal=$((maxValor * (100 + INCREMENTO) / 100))
 echo $valorFinal
-
 # 4. Convierte la imagen a un cuadrado, centrándola y rellenando el fondo con el color '#288368'
 # El nuevo tamaño es $valorFinal x $valorFinal
-convert $INTERMEDIO -gravity center -background '#288368' -extent "${valorFinal}x${valorFinal}" $FINAL
+if command -v magick &>/dev/null; then
+	echo "Usando magick para convertir la imagen a un cuadrado"
+	magick "$IMAGEN_CON_BORDE" -gravity center -background $COLOR_FONDO -extent "${valorFinal}x${valorFinal}" "$IMAGEN_FINAL"
+else
+	echo "Advertencia: El comando 'magick' de ImageMagick no está disponible, usando 'convert' para convertir la imagen a un cuadrado"
+	convert "$IMAGEN_CON_BORDE" -gravity center -background $COLOR_FONDO -extent "${valorFinal}x${valorFinal}" "$IMAGEN_FINAL"
+fi
 
 # En resumen, este código toma una imagen, la convierte en un cuadrado
 # y aumenta su tamaño, manteniendo la imagen original centrada y rellenando
 # el espacio adicional con un color de fondo específico.
+
+# mostramos el archivo
+# Cerramos la ventana con "q"
+display $IMAGEN_FINAL
 
 # #############################################################
 # Podría preguntar en que color hacer el logo y el texto.
@@ -248,9 +251,6 @@ convert $INTERMEDIO -gravity center -background '#288368' -extent "${valorFinal}
 # Movemos el archivo original
 # mv dirimagen/$nombreArchivo ./originales/
 
-# mostramos el archivo
-# Cerramos la ventana con "q"
-display $FINAL
 
 # Fin del archivo.
 #-----------------
